@@ -1,0 +1,69 @@
+.upload-form__overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.upload-form__wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 768px;
+    height: 50%;
+    padding: 50px;
+    background-color: #FFFFFF;
+    border: 1px solid black;
+
+    & button {
+        cursor: pointer;
+    }
+
+}
+
+& .upload-form__close {
+    width: 20%;
+    text-align: right;
+    font-size: 20px;
+    color: #2e00b2;
+    background-color: #FFFFFF;
+    border: none;
+    height: 24px;
+}
+
+.upload-form__form {
+    width: 80%;
+    height: 100%;
+
+    & input,
+    & textarea {
+        display: block;
+        padding: 10px;
+        margin-bottom: 30px;
+        width: 80%;
+    }
+
+    & textarea {
+        height: 46%;
+        resize: none;
+    }
+
+    & button {
+        font-weight: bold;
+        color: #FFFFFF;
+        padding: 12px;
+        background-color: #2e00b2;
+        border: none;
+        width: 150px;
+
+        &.button-disabled {
+            background-color: rgba(46, 0, 178, 0.1);
+            cursor: not-allowed;
+        }
+    }
+}

@@ -1,0 +1,16 @@
+.upload__wrapper {
+    position: absolute;
+    z-index: 1;
+    bottom: 50px;
+    right: 50px;
+}
+
+.upload__button,
+.upload__submit__button {
+    font-weight: bold;
+    color: #FFFFFF;
+    padding: 12px;
+    background-color: #2e00b2;
+    border: none;
+    cursor: pointer;
+}

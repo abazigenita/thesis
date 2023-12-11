@@ -1,0 +1,6 @@
+.filtered__papers {
+    width: calc(100% - 300px);
+    height: calc(100vh - 180px);
+    overflow-y: auto;
+    margin: 50px 0 50px 300px;
+}

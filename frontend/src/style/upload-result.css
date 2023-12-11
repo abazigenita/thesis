@@ -1,0 +1,42 @@
+.upload-results {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    position: absolute;
+    z-index: 1;
+    top: 80px;
+    right: 0;
+    width: 400px;
+    height: calc(100vh - 80px);
+    overflow: auto;
+    background-color: #FFFFFF;
+    border-left: 1px solid #000000;
+}
+
+.upload-results__papers {
+    padding: 10px 10px 0 10px;
+}
+
+.upload-results__papers__authors {
+    font-size: 10px;
+    margin: 0;
+    color: rgba(0, 0, 0, .5);
+
+    & span {
+        font-weight: bold;
+    }
+}
+
+.upload-results__papers__link {
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.upload-results__close {
+    font-size: 20px;
+    color: #2e00b2;
+    background-color: #FFFFFF;
+    border: none;
+    padding-right: 20px;
+}
