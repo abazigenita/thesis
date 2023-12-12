@@ -31,7 +31,7 @@ function Form({onClose, onSubmit}) {
         onSubmit(formData);
 
         try {
-            const response = await fetch("http://localhost:5001/submit-paper", {
+            const response = await fetch("http://localhost:5002/submit-paper", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

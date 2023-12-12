@@ -13,12 +13,12 @@ function UploadResult({similarPapers, onClose}) {
                 <p className="upload-results__papers__authors"><span>Authors</span>: {paper.authors}</p>
                 <p>{paper.abstract}</p>
                 {isArxivId(paper.id) &&
-                <a href={`https://arxiv.org/abs/0${paper.id}`}
-                   target="_blank"
-                   rel="noreferrer"
-                   className="upload-results__papers__link">
-                    <FontAwesomeIcon icon="fa-solid fa-arrow-up-right-from-square"/> Paper Details
-                </a>
+                    <a href={`https://arxiv.org/abs/0${paper.id}`}
+                       target="_blank"
+                       rel="noreferrer"
+                       className="upload-results__papers__link">
+                        <FontAwesomeIcon icon="fa-solid fa-arrow-up-right-from-square"/> Paper Details
+                    </a>
                 }
                 <hr/>
             </div>

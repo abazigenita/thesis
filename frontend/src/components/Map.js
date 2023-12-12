@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-function Map({data}) {
+const Map = React.memo(({data}) => {
     console.log(data)
     const getMarkerSize = (item) => {
         if (item.isNew) {
@@ -12,9 +12,9 @@ function Map({data}) {
 
     const getMarkerColor = (item) => {
         if (item.isNew) {
-            return 'black'; // Distinct color for new points
+            return 'black';
         }
-        return item.cluster !== undefined ? item.cluster.toString() : 'defaultColor'; // Provide a default color if cluster is undefined
+        return item.cluster !== undefined ? item.cluster.toString() : 'defaultColor';
     };
 
     const plotData = [
@@ -53,6 +53,6 @@ function Map({data}) {
     };
 
     return <Plot data={plotData} layout={layout}/>;
-}
+});
 
 export default Map;

@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import axios from 'axios';
 import Form from './Form';
 
-function Upload({onNewData}) {
+function Upload({onNewData, setLoading}) {
     const [showForm, setShowForm] = useState(false);
 
     const handleOpenForm = () => {
@@ -14,8 +14,9 @@ function Upload({onNewData}) {
     };
 
     const handleSubmit = async (formData) => {
+        setLoading(true);
         try {
-            const response = await axios.post('http://localhost:5001/submit-paper', formData);
+            const response = await axios.post('http://localhost:5002/submit-paper', formData);
             if (response.status === 200) {
                 const responseData = response.data;
                 const newDataPoint = {
@@ -30,6 +31,8 @@ function Upload({onNewData}) {
             }
         } catch (error) {
             console.error('Error submitting paper:', error);
+        } finally {
+            setLoading(false);
         }
     };
 

@@ -1,12 +1,11 @@
 import React, {useState, useMemo} from "react";
 import axios from "axios";
 
-function Filter({onFilter}) {
+function Filter({onFilter, onlyLicensed, setOnlyLicensed, setLoading}) {
     const [filters, setFilters] = useState({
         category: "",
-        subcategories: [],
         dateGroup: "Any time",
-        onlyLicensed: false,
+        onlyLicensed: onlyLicensed,
     });
 
     const categories = useMemo(() => [
@@ -20,44 +19,12 @@ function Filter({onFilter}) {
         "Economics",
     ], []);
 
-    const subcategories = useMemo(() => ({
-        Physics: [
-            "astro-ph",
-            "cond-mat",
-            "gr-qc",
-            "hep-ex",
-            "hep-lat",
-            "hep-ph",
-            "hep-th",
-            "math-ph",
-            "nlin",
-            "nucl-ex",
-            "nucl-th",
-            "physics",
-            "quant-ph",
-        ],
-        Mathematics: ["math"],
-        "Computer Science": ["CoRR"],
-        "Quantitative Biology": ["q-bio"],
-        "Quantitative Finance": ["q-fin"],
-        Statistics: ["stat"],
-        "Electrical Engineering and Systems Science": ["eess"],
-        Economics: ["econ"],
-    }), []);
-
     const dateGroups = ["Any time", "Since 2023", "Since 2022", "Since 2019"];
 
     const handleCategoryChange = async (event) => {
         const selectedCategory = event.target.value;
-        const selectedSubcategories = subcategories[selectedCategory] || [];
-
-        setFilters({
-            ...filters,
-            category: selectedCategory,
-            subcategories: selectedSubcategories,
-        });
-
-        await applyFilter("category", selectedCategory, selectedSubcategories);
+        setFilters({...filters, category: selectedCategory});
+        await applyFilter("category", selectedCategory);
     };
 
     const handleDateGroupChange = async (dateGroup) => {
@@ -65,26 +32,26 @@ function Filter({onFilter}) {
         await applyFilter("date", dateGroup);
     };
 
-
     const handleLicenseChange = async () => {
-        const updatedLicenseState = !filters.onlyLicensed;
-        setFilters({...filters, onlyLicensed: updatedLicenseState});
+        const updatedLicenseState = !onlyLicensed;
+        setOnlyLicensed(updatedLicenseState);
         await applyFilter("license", updatedLicenseState);
     };
 
     const applyFilter = async (filterType, value) => {
+        setLoading(true);
         let apiUrl, postData;
         switch (filterType) {
             case "category":
-                apiUrl = "http://localhost:5001/filter-category";
-                postData = {categories: [value, ...subcategories[value]]};
+                apiUrl = "http://localhost:5002/filter-category";
+                postData = {category: value};
                 break;
             case "date":
-                apiUrl = "http://localhost:5001/filter-date";
+                apiUrl = "http://localhost:5002/filter-date";
                 postData = {dateGroup: value};
                 break;
             case "license":
-                apiUrl = "http://localhost:5001/filter-license";
+                apiUrl = "http://localhost:5002/filter-license";
                 postData = {onlyLicensed: value};
                 break;
             default:
@@ -93,7 +60,8 @@ function Filter({onFilter}) {
 
         try {
             const response = await axios.post(apiUrl, postData);
-            onFilter(response.data); // Update the map data with filtered results
+            onFilter(response.data);
+            setLoading(false);
         } catch (error) {
             console.error("Error while applying filter:", error);
         }
@@ -111,7 +79,7 @@ function Filter({onFilter}) {
                         onChange={handleCategoryChange}
                         className="filter__category"
                     >
-                        <option value="">Select a category</option>
+                        <option value="">All Categories</option>
                         {categories.map((category, index) => (
                             <option key={index} value={category}>
                                 {category}
@@ -141,7 +109,7 @@ function Filter({onFilter}) {
                         <input
                             type="checkbox"
                             name="onlyLicensed"
-                            checked={filters.onlyLicensed}
+                            checked={onlyLicensed}
                             onChange={handleLicenseChange}
                             className="filter__license"
                         />

@@ -9,7 +9,6 @@ from umap import UMAP
 from uuid import uuid4
 import torch
 import uvicorn
-from typing import List
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import euclidean_distances
 
@@ -273,34 +272,67 @@ async def get_data():
 
 
 class CategoryFilterQuery(BaseModel):
-    categories: List[str] = []
+    category: str
 
 
 @app.post("/filter-category")
 async def filter_papers_by_category(filter_query: CategoryFilterQuery):
-    if not filter_query.categories:
-        raise HTTPException(status_code=400, detail="Categories cannot be empty")
+    # Mapping of categories to their subcategories
+    subcategories = {
+        "Physics": [
+            "astro-ph",
+            "cond-mat",
+            "gr-qc",
+            "hep-ex",
+            "hep-lat",
+            "hep-ph",
+            "hep-th",
+            "math-ph",
+            "nlin",
+            "nucl-ex",
+            "nucl-th",
+            "physics",
+            "quant-ph",
+        ],
+        "Mathematics": ["math.AG", "math.AT", "math.AP", "math.CT", "math.CA", "math.CO", "math.AC", "math.CV",
+                        "math.DG", "math.DS", "math.FA", "math.GM", "math.GN", "math.GT", "math.GR", "math.HO",
+                        "math.IT", "math.KT", "math.LO", "math.MP", "math.MG", "math.NT", "math.NA", "math.OA",
+                        "math.OC", "math.PR", "math.QA", "math.RT", "math.RA", "math.SP", "math.ST", "math.SG"],
+        "Computer Science": ["cs.AI", "cs.AR", "cs.CC", "cs.CE", "cs.CG", "cs.CL", "cs.CR", "cs.CV", "cs.CY",
+                             "cs.DB", "cs.DC", "cs.DL", "cs.DM", "cs.DS", "cs.ET", "cs.FL", "cs.GL", "cs.GR",
+                             "cs.GT", "cs.HC", "cs.IR", "cs.IT", "cs.LG", "cs.LO", "cs.MA", "cs.MM", "cs.MS",
+                             "cs.NA", "cs.NE", "cs.NI", "cs.OH", "cs.OS", "cs.PF", "cs.PL", "cs.RO", "cs.SC",
+                             "cs.SD", "cs.SE", "cs.SI", "cs.SY"],
+        "Quantitative Biology": ["q-bio.BM", "q-bio.CB", "q-bio.GN", "q-bio.MN", "q-bio.NC", "q-bio.OT", "q-bio.PE",
+                                 "q-bio.QM", "q-bio.SC", "q-bio.TO"],
+        "Quantitative Finance": ["q-fin.CP", "q-fin.EC", "q-fin.GN", "q-fin.MF", "q-fin.PM", "q-fin.PR", "q-fin.RM",
+                                 "q-fin.ST", "q-fin.TR"],
+        "Statistics": ["stat.AP", "stat.CO", "stat.ML", "stat.ME", "stat.OT", "stat.TH"],
+        "Electrical Engineering and Systems Science": ["eess.AS", "eess.IV", "eess.SP", "eess.SY"],
+        "Economics": ["econ.EM", "econ.GN", "econ.TH"]
+    }
 
-    # Perform a broad query in Milvus
+    # Find the subcategories for the selected category
+    selected_subcategories = subcategories.get(filter_query.category, [])
+
+    # Construct the query expression
+    category_expr = " || ".join([f"categories like '{subcat}'" for subcat in selected_subcategories])
+
+    # Perform the query in Milvus
     res = collection.query(
-        expr="",
-        offset=0,
+        expr=category_expr,
         limit=10000,
         output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster"]
     )
 
-    # Filter the results based on categories
-    filtered_results = []
-    for hit in res:
-        hit_categories = set(hit.get("categories", "").split())
-        if hit_categories.intersection(set(filter_query.categories)):
-            filtered_results.append({
-                'title': hit.get("title"),
-                'categories': hit.get("categories"),
-                'dimension_X': hit.get("dimension_X"),
-                'dimension_Y': hit.get("dimension_Y"),
-                'cluster': hit.get("cluster")
-            })
+    # Process the results
+    filtered_results = [{
+        'title': hit.get("title"),
+        'categories': hit.get("categories"),
+        'dimension_X': float(hit.get("dimension_X")) if hit.get("dimension_X") is not None else None,
+        'dimension_Y': float(hit.get("dimension_Y")) if hit.get("dimension_Y") is not None else None,
+        'cluster': int(hit.get("cluster")) if hit.get("cluster") is not None else None
+    } for hit in res]
 
     return filtered_results
 
@@ -322,14 +354,18 @@ async def filter_papers(filter_query: LicenseFilterQuery):
     )
 
     # Extract the results
-    filtered_results = [{
-        'title': hit.get("title"),
-        'categories': hit.get("categories"),
-        'dimension_X': hit.get("dimension_X"),
-        'dimension_Y': hit.get("dimension_Y"),
-        'cluster': hit.get("cluster")
-    } for hit in res]
-
+    filtered_results = []
+    for item in res:
+        processed_item = {
+            "dimension_X": float(item["dimension_X"]) if item["dimension_X"] is not None else None,
+            "dimension_Y": float(item["dimension_Y"]) if item["dimension_Y"] is not None else None,
+            "cluster": item["cluster"],
+            "title": item["title"],
+            "categories": item["categories"],
+            "normalized_distance": float(data.loc[data['title'] == item["title"], 'normalized_distance'].iloc[0]) if
+            data['title'].isin([item["title"]]).any() else None
+        }
+        filtered_results.append(processed_item)
     return filtered_results
 
 
@@ -357,17 +393,21 @@ async def filter_papers_by_date(filter_query: DateFilterQuery):
         output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster"]
     )
 
+    filtered_results = []
     # Extract and return the results
-    filtered_results = [{
-        'title': hit.get("title"),
-        'categories': hit.get("update_date"),
-        'dimension_X': hit.get("dimension_X"),
-        'dimension_Y': hit.get("dimension_Y"),
-        'cluster': hit.get("cluster")
-    } for hit in res]
-
+    for item in res:
+        processed_item = {
+            "dimension_X": float(item["dimension_X"]) if item["dimension_X"] is not None else None,
+            "dimension_Y": float(item["dimension_Y"]) if item["dimension_Y"] is not None else None,
+            "cluster": item["cluster"],
+            "title": item["title"],
+            "categories": item["categories"],
+            "normalized_distance": float(data.loc[data['title'] == item["title"], 'normalized_distance'].iloc[0]) if
+            data['title'].isin([item["title"]]).any() else None
+        }
+        filtered_results.append(processed_item)
     return filtered_results
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=5001, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=5002, reload=True)

@@ -1,29 +1,29 @@
-import React, {useState} from "react";
+import React, {useState, useCallback} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
-function Search({onSearch, onToggleFilter}) {
+function Search({onSearch, onToggleFilter, setLoading}) {
     const [searchTerm, setSearchTerm] = useState("");
 
-    const handleChange = (e) => {
+    const handleChange = useCallback((e) => {
         setSearchTerm(e.target.value);
-    };
+    }, []);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
 
-        if (!searchTerm.trim()) return;
+        setLoading(true); // Start loading
 
-        const response = await fetch('http://localhost:5001/search', {
+        const response = await fetch('http://localhost:5002/search', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({query: searchTerm}),
         });
 
         const data = await response.json();
         onSearch(data);
-    };
+
+        setLoading(false); // Stop loading
+    }, [onSearch, searchTerm, setLoading]);
 
     return (
         <div className="search__wrapper">

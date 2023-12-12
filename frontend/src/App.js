@@ -14,6 +14,7 @@ function App() {
     const [showFilter, setShowFilter] = useState(false);
     const [similarPapers, setSimilarPapers] = useState([]);
     const [showUploadResults, setShowUploadResults] = useState(false);
+    const [onlyLicensed, setOnlyLicensed] = useState(false);
 
     const toggleFilter = () => {
         setShowFilter(!showFilter);
@@ -21,7 +22,7 @@ function App() {
 
     useEffect(() => {
         axios
-            .get("http://localhost:5001/get-data")
+            .get("http://localhost:5002/get-data")
             .then((response) => {
                 setPlotData(response.data);
                 setLoading(false);
@@ -52,9 +53,14 @@ function App() {
 
     return (
         <>
-            <Search onSearch={handleSearchResults} onToggleFilter={toggleFilter}/>
-            {showFilter && <Filter onFilter={handleFilterResults} />}
-            <Upload onNewData={handleNewData}/>
+            <Search onSearch={handleSearchResults} onToggleFilter={toggleFilter} setLoading={setLoading}/>
+            {showFilter && <Filter
+                onlyLicensed={onlyLicensed}
+                setOnlyLicensed={setOnlyLicensed}
+                onFilter={handleFilterResults}
+                setLoading={setLoading}
+            />}
+            <Upload onNewData={handleNewData} setLoading={setLoading}/>
             {showUploadResults && (
                 <UploadResult similarPapers={similarPapers} onClose={handleCloseUploadResults}/>
             )}
