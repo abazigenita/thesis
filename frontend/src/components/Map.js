@@ -1,8 +1,15 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-const Map = React.memo(({data}) => {
-    console.log(data)
+const Map = React.memo(({data, onDataPointClick}) => {
+    const handleClick = (event) => {
+        if (event.points && event.points.length > 0) {
+            const pointIndex = event.points[0].pointIndex;
+            const selectedPoint = data[pointIndex];
+            onDataPointClick(selectedPoint); // Call the passed function
+        }
+    };
+
     const getMarkerSize = (item) => {
         if (item.isNew) {
             return 15;
@@ -52,7 +59,15 @@ const Map = React.memo(({data}) => {
         margin: {l: 0, r: 0, b: 0, t: 0},
     };
 
-    return <Plot data={plotData} layout={layout}/>;
+    return (
+        <>
+            <Plot
+                data={plotData}
+                layout={layout}
+                onClick={handleClick}
+            />
+        </>
+    )
 });
 
 export default Map;

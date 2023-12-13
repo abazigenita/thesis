@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import openai as ai
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import BertTokenizer, AutoModel
@@ -7,10 +8,13 @@ from pymilvus import connections, Collection
 from pydantic import BaseModel
 from umap import UMAP
 from uuid import uuid4
-import torch
-import uvicorn
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import euclidean_distances
+import torch
+import uvicorn
+import os
+
+ai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
@@ -226,7 +230,7 @@ async def submit_paper(submission: PaperSubmission):
         param=search_params,
         limit=5,  # Retrieve top 5 similar embeddings
         expr=None,
-        output_fields=["id", "title", "authors", "abstract"]
+        output_fields=["id", "title", "authors", "abstract", "update_date"]
     )
 
     # Extract details of similar papers
@@ -234,7 +238,8 @@ async def submit_paper(submission: PaperSubmission):
         "id": hit.entity.get("id"),
         "title": hit.entity.get("title"),
         "authors": hit.entity.get("authors"),
-        "abstract": hit.entity.get("abstract")
+        "abstract": hit.entity.get("abstract"),
+        "date": hit.entity.get("update_date")
     } for hit in search_results[0]]
 
     # Prepare the response data
@@ -245,7 +250,8 @@ async def submit_paper(submission: PaperSubmission):
         "title": submission.title,
         "categories": "",
         "isNew": True,
-        "similar_papers": similar_papers
+        "similar_papers": similar_papers,
+        "abstract": submission.abstract
     }
 
     return new_data
@@ -254,7 +260,8 @@ async def submit_paper(submission: PaperSubmission):
 @app.get("/get-data")
 async def get_data():
     limit = 10000
-    results = collection.query(expr="", output_fields=["dimension_X", "dimension_Y", "cluster", "title", "categories"],
+    results = collection.query(expr="", output_fields=["dimension_X", "dimension_Y", "cluster", "title", "categories",
+                                                       "authors", "update_date", "abstract", "id"],
                                limit=limit)
     processed_results = []
     for item in results:
@@ -264,11 +271,43 @@ async def get_data():
             "cluster": item["cluster"],
             "title": item["title"],
             "categories": item["categories"],
+            "authors": item["authors"],
+            "abstract": item["abstract"],
+            "date": item["update_date"],
+            "id": item["id"],
             "normalized_distance": float(data.loc[data['title'] == item["title"], 'normalized_distance'].iloc[0]) if
             data['title'].isin([item["title"]]).any() else None
         }
         processed_results.append(processed_item)
     return processed_results
+
+
+class GenerateAbstractRequest(BaseModel):
+    original_abstract: str
+    similar_abstracts: list[str]
+
+
+@app.post("/generate-abstract")
+async def generate_abstract(request: GenerateAbstractRequest):
+    prompt = ("Based on the following abstracts, generate a comprehensive abstract that encompasses the key themes and "
+              "ideas:\n\n")
+    prompt += f"1. Abstract of Uploaded Paper: {request.original_abstract}\n\n"
+    for i, abstract in enumerate(request.similar_abstracts, start=2):
+        prompt += f"{i}. Abstract of Similar Paper {i - 1}: {abstract}\n\n"
+    prompt += "Generated Abstract:"
+
+    try:
+        response = ai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=500
+        )
+        generated_abstract = response.choices[0].text.strip()
+    except Exception as e:
+        print(f"Error in generating abstract: {e}")
+        return {"error": "Abstract generation failed."}
+
+    return {"generated_abstract": generated_abstract}
 
 
 class CategoryFilterQuery(BaseModel):

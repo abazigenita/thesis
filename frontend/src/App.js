@@ -6,6 +6,7 @@ import Upload from "./components/Upload";
 import Map from "./components/Map";
 import Loader from "./components/Loader";
 import UploadResult from "./components/UploadResult";
+import Details from "./components/Details";
 import "./style/main.css";
 
 function App() {
@@ -15,6 +16,9 @@ function App() {
     const [similarPapers, setSimilarPapers] = useState([]);
     const [showUploadResults, setShowUploadResults] = useState(false);
     const [onlyLicensed, setOnlyLicensed] = useState(false);
+    const [originalAbstract, setOriginalAbstract] = useState("");
+    const [selectedDataPoint, setSelectedDataPoint] = useState(null);
+    const [isDetailsVisible, setIsDetailsVisible] = useState(false);
 
     const toggleFilter = () => {
         setShowFilter(!showFilter);
@@ -48,12 +52,27 @@ function App() {
     const handleNewData = (newData) => {
         setPlotData([...plotData, newData]);
         setSimilarPapers(newData.similarPapers || []);
+        setOriginalAbstract(newData.abstract);
         setShowUploadResults(true);
+    };
+
+    const handleDataPointClick = (dataPoint) => {
+        setSelectedDataPoint(dataPoint);
+        setIsDetailsVisible(true);
+    };
+
+    const handleCloseDetails = () => {
+        setIsDetailsVisible(false);
     };
 
     return (
         <>
-            <Search onSearch={handleSearchResults} onToggleFilter={toggleFilter} setLoading={setLoading}/>
+            <Search
+                onSearch={handleSearchResults}
+                onToggleFilter={toggleFilter}
+                setLoading={setLoading}
+                showFilter={showFilter}
+            />
             {showFilter && <Filter
                 onlyLicensed={onlyLicensed}
                 setOnlyLicensed={setOnlyLicensed}
@@ -62,16 +81,24 @@ function App() {
             />}
             <Upload onNewData={handleNewData} setLoading={setLoading}/>
             {showUploadResults && (
-                <UploadResult similarPapers={similarPapers} onClose={handleCloseUploadResults}/>
+                <UploadResult
+                    similarPapers={similarPapers}
+                    onClose={handleCloseUploadResults}
+                    originalAbstract={originalAbstract}
+                />
             )}
             {loading ? (
                 <Loader isLoading={loading}/>
             ) : (
                 plotData.length > 0 && (
                     <div className="plot-container">
-                        <Map data={plotData}/>
+                        <Map data={plotData} onDataPointClick={handleDataPointClick}/>
                     </div>
                 )
+            )}
+
+            {isDetailsVisible && selectedDataPoint && (
+                <Details selectedData={selectedDataPoint} onClose={handleCloseDetails}/>
             )}
         </>
     );

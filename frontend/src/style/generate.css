@@ -1,0 +1,13 @@
+.generate__wrapper {
+    margin: 35px;
+    text-align: center;
+}
+
+.generate__button {
+    font-weight: bold;
+    color: #FFFFFF;
+    padding: 15px;
+    background-color: #2e00b2;
+    border: none;
+    cursor: pointer;
+}

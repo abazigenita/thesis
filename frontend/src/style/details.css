@@ -1,4 +1,4 @@
-.upload-results {
+.details__wrapper {
     display: flex;
     justify-content: center;
     align-items: baseline;
@@ -14,12 +14,12 @@
     box-shadow: rgba(0, 0, 0, 0.35) 0 5px 15px;
 }
 
-.upload-results__all {
+.details__content {
     padding: 10px 10px 0 10px;
 }
 
-.upload-results__papers__authors,
-.upload-results__papers__date {
+.details__content__authors,
+.details__content__date {
     font-size: 10px;
     margin: 0;
     color: rgba(0, 0, 0, .5);
@@ -29,13 +29,21 @@
     }
 }
 
-.upload-results__papers__link {
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: bold;
+.details__content__authors {
+    margin-bottom: 10px;
 }
 
-.upload-results__close {
+.details__content__link {
+    margin-bottom: 30px;
+
+    & a {
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: bold;
+    }
+}
+
+.details__wrapper__close {
     font-size: 20px;
     color: #2e00b2;
     background-color: #FFFFFF;

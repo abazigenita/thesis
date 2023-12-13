@@ -1,7 +1,7 @@
 import React, {useState, useCallback} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
-function Search({onSearch, onToggleFilter, setLoading}) {
+function Search({onSearch, onToggleFilter, setLoading, showFilter}) {
     const [searchTerm, setSearchTerm] = useState("");
 
     const handleChange = useCallback((e) => {
@@ -11,7 +11,7 @@ function Search({onSearch, onToggleFilter, setLoading}) {
     const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
 
-        setLoading(true); // Start loading
+        setLoading(true);
 
         const response = await fetch('http://localhost:5002/search', {
             method: 'POST',
@@ -22,13 +22,16 @@ function Search({onSearch, onToggleFilter, setLoading}) {
         const data = await response.json();
         onSearch(data);
 
-        setLoading(false); // Stop loading
+        setLoading(false);
     }, [onSearch, searchTerm, setLoading]);
 
     return (
         <div className="search__wrapper">
             <div className="nav__button">
-                <FontAwesomeIcon icon="fa-solid fa-bars" onClick={onToggleFilter}/>
+                <FontAwesomeIcon
+                    icon={showFilter ? "fa-solid fa-x" : "fa-solid fa-bars"}
+                    onClick={onToggleFilter}
+                />
             </div>
             <form onSubmit={handleSubmit} className="search__form">
                 <input
