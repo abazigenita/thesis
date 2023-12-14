@@ -47,25 +47,6 @@ def embed_text(text):
     return outputs.last_hidden_state.mean(dim=1).numpy().astype(np.float32)
 
 
-# Define the Milvus connection and collection initialization here
-def initialize_milvus():
-    connections.connect(
-        alias="default",
-        user="username",
-        password="password",
-        host="localhost",
-        port="19530"
-    )
-
-    # Retrieve the "arXiv" collection
-    milvus_collection = Collection("arXiv")
-
-    return milvus_collection
-
-
-# Initialize the Milvus collection
-collection = initialize_milvus()
-
 # expr = "authors == 'Genita Abazi'"
 # query_results = collection.query(expr, output_fields=["id"])
 #
@@ -78,14 +59,23 @@ collection = initialize_milvus()
 #     print("No records found for the given author.")
 
 
-# Create an index for each embedding in the collection
-index_params = {
-    'metric_type': "L2",
-    'index_type': "IVF_FLAT",
-    'params': {"nlist": 1024},
-}
+# Initialize Milvus connection and load collection
+def initialize_milvus():
+    connections.connect(
+        alias="default",
+        host="localhost",
+        port="19530"
+    )
 
-collection.create_index("merged_embeddings", index_params)
+    # Load the collection
+    collection = Collection("arXiv")
+    collection.load()
+
+    return collection
+
+
+# Initialize the Milvus collection
+collection = initialize_milvus()
 
 # Define search parameters
 search_params = {
@@ -153,12 +143,17 @@ async def search(query: SearchQuery):
         param=search_params,
         limit=10000,
         expr=None,
-        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster"]
+        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster", "authors", "abstract", "id",
+                       "update_date"]
     )
 
     # Process and return the search results
     processed_results = [{
         "title": hit.entity.get("title"),
+        'authors': hit.get("authors"),
+        'abstract': hit.get("abstract"),
+        'date': hit.get("update_date"),
+        'id': hit.get("id"),
         "categories": hit.entity.get("categories"),
         "dimension_X": hit.entity.get("dimension_X"),
         "dimension_Y": hit.entity.get("dimension_Y"),
@@ -361,12 +356,17 @@ async def filter_papers_by_category(filter_query: CategoryFilterQuery):
     res = collection.query(
         expr=category_expr,
         limit=10000,
-        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster"]
+        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster", "authors", "abstract",
+                       "update_date", "id"]
     )
 
     # Process the results
     filtered_results = [{
         'title': hit.get("title"),
+        'authors': hit.get("authors"),
+        'abstract': hit.get("abstract"),
+        'date': hit.get("update_date"),
+        'id': hit.get("id"),
         'categories': hit.get("categories"),
         'dimension_X': float(hit.get("dimension_X")) if hit.get("dimension_X") is not None else None,
         'dimension_Y': float(hit.get("dimension_Y")) if hit.get("dimension_Y") is not None else None,
@@ -389,7 +389,8 @@ async def filter_papers(filter_query: LicenseFilterQuery):
         expr=expr,
         offset=0,
         limit=10000,
-        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster"]
+        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster", "authors", "abstract", "id",
+                       "update_date"]
     )
 
     # Extract the results
@@ -401,6 +402,10 @@ async def filter_papers(filter_query: LicenseFilterQuery):
             "cluster": item["cluster"],
             "title": item["title"],
             "categories": item["categories"],
+            'authors': item.get("authors"),
+            'abstract': item.get("abstract"),
+            'date': item.get("update_date"),
+            'id': item.get("id"),
             "normalized_distance": float(data.loc[data['title'] == item["title"], 'normalized_distance'].iloc[0]) if
             data['title'].isin([item["title"]]).any() else None
         }
@@ -429,7 +434,8 @@ async def filter_papers_by_date(filter_query: DateFilterQuery):
         expr=expr,
         offset=0,
         limit=10000,
-        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster"]
+        output_fields=["title", "categories", "dimension_X", "dimension_Y", "cluster", "authors", "abstract", "id",
+                       "update_date"]
     )
 
     filtered_results = []
@@ -441,6 +447,10 @@ async def filter_papers_by_date(filter_query: DateFilterQuery):
             "cluster": item["cluster"],
             "title": item["title"],
             "categories": item["categories"],
+            'authors': item.get("authors"),
+            'abstract': item.get("abstract"),
+            'date': item.get("update_date"),
+            'id': item.get("id"),
             "normalized_distance": float(data.loc[data['title'] == item["title"], 'normalized_distance'].iloc[0]) if
             data['title'].isin([item["title"]]).any() else None
         }

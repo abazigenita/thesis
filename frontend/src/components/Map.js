@@ -59,15 +59,7 @@ const Map = React.memo(({data, onDataPointClick}) => {
         margin: {l: 0, r: 0, b: 0, t: 0},
     };
 
-    return (
-        <>
-            <Plot
-                data={plotData}
-                layout={layout}
-                onClick={handleClick}
-            />
-        </>
-    )
+    return <Plot data={plotData} layout={layout} onClick={handleClick}/>
 });
 
 export default Map;
