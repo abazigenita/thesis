@@ -26,7 +26,7 @@ function App() {
 
     useEffect(() => {
         axios
-            .get("http://localhost:5002/get-data")
+            .get("http://localhost:5002/")
             .then((response) => {
                 setPlotData(response.data);
                 setLoading(false);
