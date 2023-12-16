@@ -29,30 +29,6 @@ function Form({onClose, onSubmit}) {
         if (!isFormValid) return;
 
         onSubmit(formData);
-
-        try {
-            const response = await fetch("http://localhost:5002/submit-paper", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    title: formData.title,
-                    authors: formData.authors,
-                    abstract: formData.abstract,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            console.log("Submission result:", result);
-            onClose();
-        } catch (error) {
-            console.error("Error submitting paper:", error);
-        }
     };
 
     return (

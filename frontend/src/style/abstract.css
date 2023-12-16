@@ -20,6 +20,7 @@
     padding: 50px;
     background-color: #FFFFFF;
     border: 1px solid black;
+    overflow-y: auto;
 }
 
 .abstract__wrapper__results {

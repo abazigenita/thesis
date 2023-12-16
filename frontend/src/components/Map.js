@@ -28,7 +28,7 @@ const Map = React.memo(({data, onDataPointClick}) => {
         {
             x: data.map((item) => item.dimension_X),
             y: data.map((item) => item.dimension_Y),
-            type: "scatter",
+            type: "scattergl",
             mode: "markers",
             marker: {
                 size: data.map(getMarkerSize),

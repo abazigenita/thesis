@@ -54,8 +54,7 @@ def fetch_data_from_milvus():
 
     results = collection.query(
         expr="",
-        output_fields=
-        [
+        output_fields=[
             "id",
             "title",
             "authors",
@@ -152,17 +151,20 @@ async def get_data():
 
     results = collection.query(
         expr="",
-        output_fields=
-        [
+        output_fields=[
             "id",
             "title",
             "authors",
             "categories",
+            "license",
             "abstract",
             "update_date",
+            "merged_embeddings",
             "dimension_X",
             "dimension_Y",
             "cluster",
+            "distance_to_centroid",
+            "normalized_distance"
         ],
         limit=limit
     )
@@ -206,8 +208,7 @@ async def search(query: SearchQuery):
         param=search_params,
         limit=10000,
         expr=None,
-        output_fields=
-        [
+        output_fields=[
             "id",
             "title",
             "authors",
@@ -233,6 +234,46 @@ async def search(query: SearchQuery):
     } for hit in search_results[0]]
 
     return processed_results
+
+
+def query_and_process_results(expr):
+    res = collection.query(
+        expr=expr,
+        offset=0,
+        limit=10000,
+        output_fields=[
+            "id",
+            "title",
+            "authors",
+            "categories",
+            "abstract",
+            "update_date",
+            "dimension_X",
+            "dimension_Y",
+            "cluster"
+        ]
+    )
+
+    filtered_results = []
+
+    for item in res:
+        processed_item = {
+            'id': item.get("id"),
+            'title': item.get("title"),
+            'authors': item.get("authors"),
+            'categories': item.get("categories"),
+            'abstract': item.get("abstract"),
+            'date': item.get("update_date"),
+            'dimension_X': float(item.get("dimension_X")) if item.get("dimension_X") is not None else None,
+            'dimension_Y': float(item.get("dimension_Y")) if item.get("dimension_Y") is not None else None,
+            'cluster': item.get("cluster"),
+            'normalized_distance': float(item.get("normalized_distance")) if item.get(
+                "normalized_distance") is not None else None
+        }
+
+        filtered_results.append(processed_item)
+
+    return filtered_results
 
 
 class CategoryFilterQuery(BaseModel):
@@ -277,42 +318,11 @@ async def filter_papers_by_category(filter_query: CategoryFilterQuery):
 
     selected_subcategories = subcategories.get(filter_query.category, [])
 
-    category_expr = " || ".join([f"categories like '{subcat}'" for subcat in selected_subcategories])
+    expr = " || ".join([f"categories like '{subcat}'" for subcat in selected_subcategories])
 
-    res = collection.query(
-        expr=category_expr,
-        limit=10000,
-        output_fields=
-        [
-            "id",
-            "title",
-            "authors",
-            "categories",
-            "abstract",
-            "update_date",
-            "dimension_X",
-            "dimension_Y",
-            "cluster"
-        ]
-    )
-
-    filtered_results = [{
-        'id': hit.get("id"),
-        'title': hit.get("title"),
-        'authors': hit.get("authors"),
-        'categories': hit.get("categories"),
-        'abstract': hit.get("abstract"),
-        'date': hit.get("update_date"),
-        'dimension_X': float(hit.get("dimension_X")) if hit.get("dimension_X") is not None else None,
-        'dimension_Y': float(hit.get("dimension_Y")) if hit.get("dimension_Y") is not None else None,
-        'cluster': int(hit.get("cluster")) if hit.get("cluster") is not None else None
-    } for hit in res]
+    filtered_results = query_and_process_results(expr)
 
     return filtered_results
-
-
-class LicenseFilterQuery(BaseModel):
-    onlyLicensed: bool = False
 
 
 class DateFilterQuery(BaseModel):
@@ -329,86 +339,20 @@ async def filter_papers_by_date(filter_query: DateFilterQuery):
 
     expr = date_conditions.get(filter_query.dateGroup, "")
 
-    res = collection.query(
-        expr=expr,
-        offset=0,
-        limit=10000,
-        output_fields=
-        [
-            "id",
-            "title",
-            "authors",
-            "categories",
-            "abstract",
-            "update_date",
-            "dimension_X",
-            "dimension_Y",
-            "cluster",
-        ]
-    )
-
-    filtered_results = []
-
-    for item in res:
-        processed_item = {
-            'id': item.get("id"),
-            "title": item["title"],
-            'authors': item.get("authors"),
-            "categories": item["categories"],
-            'abstract': item.get("abstract"),
-            'date': item.get("update_date"),
-            "dimension_X": float(item["dimension_X"]) if item["dimension_X"] is not None else None,
-            "dimension_Y": float(item["dimension_Y"]) if item["dimension_Y"] is not None else None,
-            "cluster": item["cluster"],
-            "normalized_distance": float(item.get("normalized_distance")) if item.get("normalized_distance") is not
-                                                                             None else None
-        }
-
-        filtered_results.append(processed_item)
+    filtered_results = query_and_process_results(expr)
 
     return filtered_results
+
+
+class LicenseFilterQuery(BaseModel):
+    onlyLicensed: bool = False
 
 
 @app.post("/filter-license")
 async def filter_papers(filter_query: LicenseFilterQuery):
     expr = "license != 'nan' && license != ''" if filter_query.onlyLicensed else ""
 
-    res = collection.query(
-        expr=expr,
-        offset=0,
-        limit=10000,
-        output_fields=
-        [
-            "id",
-            "title",
-            "authors",
-            "categories",
-            "abstract",
-            "update_date",
-            "dimension_X",
-            "dimension_Y",
-            "cluster",
-        ]
-    )
-
-    filtered_results = []
-
-    for item in res:
-        processed_item = {
-            'id': item.get("id"),
-            "title": item["title"],
-            'authors': item.get("authors"),
-            "categories": item["categories"],
-            'abstract': item.get("abstract"),
-            'date': item.get("update_date"),
-            "dimension_X": float(item["dimension_X"]) if item["dimension_X"] is not None else None,
-            "dimension_Y": float(item["dimension_Y"]) if item["dimension_Y"] is not None else None,
-            "cluster": item["cluster"],
-            "normalized_distance": float(item.get("normalized_distance")) if item.get("normalized_distance") is not
-                                                                             None else None
-        }
-
-        filtered_results.append(processed_item)
+    filtered_results = query_and_process_results(expr)
 
     return filtered_results
 
