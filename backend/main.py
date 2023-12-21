@@ -16,10 +16,6 @@ ai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,7 +31,8 @@ tokenizer = BertTokenizer.from_pretrained("allenai/scibert_scivocab_uncased")
 def initialize_milvus():
     connections.connect(
         alias="default",
-        host="localhost",
+        # host="localhost",
+        host="standalone",
         port="19530"
     )
 

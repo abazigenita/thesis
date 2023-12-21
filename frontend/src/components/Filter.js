@@ -43,15 +43,15 @@ function Filter({onFilter, onlyLicensed, setOnlyLicensed, setLoading}) {
         let apiUrl, postData;
         switch (filterType) {
             case "category":
-                apiUrl = "http://localhost:5002/filter-category";
+                apiUrl = "http://backend:5002/filter-category";
                 postData = {category: value};
                 break;
             case "date":
-                apiUrl = "http://localhost:5002/filter-date";
+                apiUrl = "http://backend:5002/filter-date";
                 postData = {dateGroup: value};
                 break;
             case "license":
-                apiUrl = "http://localhost:5002/filter-license";
+                apiUrl = "http://backend:5002/filter-license";
                 postData = {onlyLicensed: value};
                 break;
             default:

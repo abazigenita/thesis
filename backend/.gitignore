@@ -162,4 +162,5 @@ cython_debug/
 volumes
 volumes/*
 arxiv_research_papers.csv
+arXiv Dataset.json
 .DS_Store
