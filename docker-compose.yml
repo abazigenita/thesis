@@ -84,7 +84,7 @@ services:
       - "minio"
       - "standalone"
     environment:
-      -  OPENAI_API_KEY=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
+      -  OPENAI_API_KEY=
 
   frontend:
     platform: linux/amd64
