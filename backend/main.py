@@ -443,7 +443,7 @@ async def generate_abstract(request: GenerateAbstractRequest):
 
     try:
         response = ai.Completion.create(
-            engine="text-davinci-003",
+            engine="gpt-3.5-turbo-instruct",
             prompt=prompt,
             max_tokens=500
         )
