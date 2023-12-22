@@ -91,18 +91,6 @@ def embed_text(text):
     return outputs.last_hidden_state.mean(dim=1).numpy().astype(np.float32)
 
 
-# expr = "authors == 'Genita Abazi'"
-# query_results = collection.query(expr, output_fields=["id"])
-#
-# primary_keys_to_delete = [item["id"] for item in query_results]
-#
-# if primary_keys_to_delete:
-#     delete_expr = "id in " + str(primary_keys_to_delete)
-#     collection.delete(delete_expr)
-# else:
-#     print("No records found for the given author.")
-
-
 def process_string(s):
     if isinstance(s, list):
         return s
